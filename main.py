@@ -12,6 +12,10 @@ Testing (default):
     reporting average reward and per-interval wall-clock runtime.
 """
 
+import subprocess, sys, os
+subprocess.check_call([sys.executable, '-m', 'pip', 'install', '-q', '-r',
+                       os.path.join(os.path.dirname(__file__), 'requirements.txt')])
+
 import gymnasium as gym
 from stable_baselines3 import PPO
 from gym_foo.envs.foo_env import FooEnv  # noqa: F401 — registers the custom env
@@ -40,7 +44,7 @@ env = gym.make('foo-v1')
 # ---------------------------------------------------------------------------
 print('---------- TEST STARTS ----------')
 
-model = PPO.load('ppo_policy')
+model = PPO.load('PPO_policy')
 
 test_time = 1        # number of tests
 num_intervals = 6 * 7    # must match env.max_step

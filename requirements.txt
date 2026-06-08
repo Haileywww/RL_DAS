@@ -1,0 +1,5 @@
+gymnasium>=1.2.3
+stable-baselines3>=2.8.0
+numpy>=2.4.4
+scipy>=1.14.0
+shapely>=2.0.0
