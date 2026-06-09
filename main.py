@@ -16,22 +16,18 @@ import os
 import sys
 import subprocess
 
+# Auto install dependencies 
 requirements_path = os.path.join(os.path.dirname(__file__), 'requirements.txt')
-
-# Base command
 pip_command = [sys.executable, '-m', 'pip', 'install', '-r', requirements_path]
-
-# Only append the flag if running inside a Linux environment (like your Docker container)
+# Linux specific flag
 if sys.platform.startswith('linux'):
     pip_command.insert(4, '--break-system-packages')
-
 print("Starting automated dependency installation...", flush=True)
-
 try:
     subprocess.check_call(pip_command, stdout=sys.stdout, stderr=sys.stderr)
     print("Dependencies installed successfully!", flush=True)
 except subprocess.CalledProcessError as e:
-    print(f"Automated installation failed: {e}", file=sys.stderr, flush=True)
+    print(f"Automated installation failed: {e}, please install manually refering to README", file=sys.stderr, flush=True)
     sys.exit(1)
 
 
@@ -52,10 +48,11 @@ env = gym.make('foo-v1')
 # model = PPO(
 #     'MlpPolicy',
 #     env,
+#     verbose=1,
 #     learning_rate=0.0003,
 #     n_steps=3,
 # ).learn(total_timesteps=30000)
-# model.save('ppo_policy')
+# model.save('PPO_policy')
 # print('Training complete — model saved as ppo_policy.zip')
 
 # ---------------------------------------------------------------------------
