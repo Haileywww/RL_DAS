@@ -94,10 +94,10 @@ class FooEnv(gym.Env):
         conflict_reward = self.calc_conflict(poly_dict, self.conflict_data, self.current_step)
 
         rewards = round(
-            -0.3 * crossing_reward / 10000
+            - 0.3 * crossing_reward / 10000
             - 0.4 * conflict_reward / 10000
             - 0.3 * similarity_reward,
-            3,
+            3
         )
         self.total_rewards += rewards
 
@@ -241,7 +241,7 @@ class FooEnv(gym.Env):
             [[conf_lat, conf_lon], conf_alt, conf_time]
         """
         conflict_data = []
-        with open('test_conflict_data.csv', 'r') as csvfile:
+        with open('train_conflict_data.csv', 'r') as csvfile:
             csvreader = csv.reader(csvfile)
             next(csvreader)
             for row in csvreader:
@@ -545,7 +545,7 @@ class FooEnv(gym.Env):
         if total_flights == 0:
             return 0.0
 
-        return dissimilarity / total_flights
+        return dissimilarity / (total_flights * 100)
 
     def calc_conflict(self, poly_dict, conflict_data, num_step):
         """
