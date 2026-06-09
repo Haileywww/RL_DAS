@@ -51,6 +51,8 @@ After obtaining the data, the repository root should contain `main.py`, `PPO_pol
 
 Run all commands from the repository root.
 
+> **Dependencies** are installed automatically when `main.py` starts — no manual `pip install` is needed. To install them manually instead, run `pip install -r requirements.txt`.
+
 ### Evaluate the pre-trained policy (default)
 
 ```bash
