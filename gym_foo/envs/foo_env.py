@@ -116,8 +116,6 @@ class FooEnv(gym.Env):
 
         terminated = False
         truncated = (self.current_step >= self.max_step)
-        if truncated:
-            print('total_reward', self.total_rewards)
 
         return np.float32(self.obs), rewards, terminated, truncated, info
 
@@ -129,7 +127,7 @@ class FooEnv(gym.Env):
         return np.float32(self.obs), {}
 
     def close(self):
-        print('environment closed')
+        pass
 
     # ------------------------------------------------------------------
     # State initialisation
