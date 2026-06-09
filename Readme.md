@@ -23,7 +23,7 @@ The four CSV data files are not included as plain files in this repository; obta
 
 ## Requirements
 
-- Python 3.10 or newer (tested on `<OS, e.g. Ubuntu 22.04 / macOS 14>` with Python `<3.11>`)
+- Python 3.11 or newer (tested on `<OS, e.g. Ubuntu 22.04 / macOS 14>` with Python `<3.11>`)
 - The Python packages listed in `requirements.txt`: `gymnasium`, `stable-baselines3`, `numpy`, `scipy`, and `shapely`. PyTorch is installed automatically as a dependency of `stable-baselines3`.
 
 ## Data
