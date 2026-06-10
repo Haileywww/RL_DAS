@@ -185,11 +185,11 @@ class FooEnv(gym.Env):
 
         # Load the rows
         flight_data = {}
-        with open('train_flight_data.csv', 'r') as csvfile:
+        with open('test_flight_data.csv', 'r') as csvfile:
             csvreader = csv.reader(csvfile)
             next(csvreader)
             rows = list(csvreader)
-            count = len(rows) // 5  # your original sampling
+            count = len(rows) // 6  # your original sampling
             rows = rows[: count]
 
             for row in rows:
@@ -241,7 +241,7 @@ class FooEnv(gym.Env):
             [[conf_lat, conf_lon], conf_alt, conf_time]
         """
         conflict_data = []
-        with open('train_conflict_data.csv', 'r') as csvfile:
+        with open('test_conflict_data.csv', 'r') as csvfile:
             csvreader = csv.reader(csvfile)
             next(csvreader)
             for row in csvreader:
@@ -367,7 +367,7 @@ class FooEnv(gym.Env):
         sectors_wps : dict
             Mapping {sector_key: waypoint_count} for each sector (or sub-sector).
         """
-        start_time = 1673913600 + (num_step - 1) * 4 * 3600
+        start_time = 1700179200 + (num_step - 1) * 4 * 3600
         end_time = start_time + 4 * 3600
         num_crossings = 0
         sectors_wps = {}
@@ -449,103 +449,104 @@ class FooEnv(gym.Env):
             # No previous sectorisation to compare against
             return 0.0
 
-        # --- OLD grid-based approach (commented out) ---
-        # resolution = 10
-        # lats = np.linspace(48, 62, num=resolution)
-        # lons = np.linspace(-7, 5, num=resolution)
-        # vor_list = list(poly_dict.keys())
-        # pre_poly_list = list(self.pre_poly_dict.values())
-        #
-        # for centroid, polygon in poly_dict.items():
-        #     p_idx = vor_list.index(centroid)
-        #     for lat in lats:
-        #         for lon in lons:
-        #             if polygon.contains(Point(lat, lon)):
-        #                 if len(pre_poly_list) == len(vor_list):
-        #                     if not Polygon(pre_poly_list[p_idx]).contains(Point(lat, lon)):
-        #                         dissimilarity += 1
-        #                 else:
-        #                     # Sector count changed — treat as maximum dissimilarity
-        #                     dissimilarity = 50
-        #
-        # return dissimilarity / (resolution ** 2)
-        # --- END OLD approach ---
+        # --- Option 1: grid-based approach for testing ---
+        resolution = 10
+        lats = np.linspace(48, 62, num=resolution)
+        lons = np.linspace(-7, 5, num=resolution)
+        vor_list = list(poly_dict.keys())
+        pre_poly_list = list(self.pre_poly_dict.values())
+        
+        for centroid, polygon in poly_dict.items():
+            p_idx = vor_list.index(centroid)
+            for lat in lats:
+                for lon in lons:
+                    if polygon.contains(Point(lat, lon)):
+                        if len(pre_poly_list) == len(vor_list):
+                            if not Polygon(pre_poly_list[p_idx]).contains(Point(lat, lon)):
+                                dissimilarity += 1
+                        else:
+                            # Sector count changed — treat as maximum dissimilarity
+                            dissimilarity = 50
+        
+        return dissimilarity / (resolution ** 2)
+        # --- END test approach ---
 
-        # New approach: use actual aircraft positions in the current time window.
+        # Option 2: aircraft-based approach.
         # For each aircraft waypoint, find which sector it belongs to under the
         # current and previous sectorisations.  If re-sectorisation would move
         # an aircraft to a different sector, count it as dissimilar.
-        start_time = 1673913600 + (num_step - 1) * 4 * 3600
-        end_time = start_time + 4 * 3600
+        # start_time = 1673913600 + (num_step - 1) * 4 * 3600
+        # end_time = start_time + 4 * 3600
 
-        all_flight_ids = list(self.flight_data.keys())
-        if self.similarity_sample is not None and self.similarity_sample < len(all_flight_ids):
-            sampled_ids = self._similarity_rng.sample(all_flight_ids, self.similarity_sample)
-        else:
-            sampled_ids = all_flight_ids
+        # all_flight_ids = list(self.flight_data.keys())
+        # if self.similarity_sample is not None and self.similarity_sample < len(all_flight_ids):
+        #     sampled_ids = self._similarity_rng.sample(all_flight_ids, self.similarity_sample)
+        # else:
+        #     sampled_ids = all_flight_ids
 
         # Use ordered lists so sectors can be matched by index across timesteps.
         # Centroid keys cannot be compared directly — they change every step as
         # centroids move — so index-based matching (same order, same sector) is
         # used instead, mirroring the original grid-based approach.
-        poly_list     = list(poly_dict.values())
-        pre_poly_list = list(self.pre_poly_dict.values())
+        # poly_list     = list(poly_dict.values())
+        # pre_poly_list = list(self.pre_poly_dict.values())
 
         # Count flights (not waypoints): a flight is "changed" if at least one
         # of its waypoints would land in a different sector after re-sectorisation.
-        total_flights = 0  # sampled flights that have at least one waypoint in the window
+        # total_flights = 0  # sampled flights that have at least one waypoint in the window
 
-        for flight_id in sampled_ids:
-            data = self.flight_data[flight_id]
-            flight_changed = False
-            has_waypoint_in_window = False
+        # for flight_id in sampled_ids:
+        #     data = self.flight_data[flight_id]
+        #     flight_changed = False
+        #     has_waypoint_in_window = False
 
-            for lat, lon, alt, t in zip(data[0], data[1], data[2], data[3]):
+        #     for lat, lon, alt, t in zip(data[0], data[1], data[2], data[3]):
                 # Skip stray header strings that survive CSV parsing
-                if t == 'time       ':
-                    continue
-                if not (start_time <= int(t) <= end_time):
-                    continue
+                # if t == 'time       ':
+                #     continue
+                # if not (start_time <= int(t) <= end_time):
+                #     continue
 
-                has_waypoint_in_window = True
+                # has_waypoint_in_window = True
 
                 # Polygon coordinate system is (lat, lon) — consistent with
                 # the Voronoi generators stored as [lat, lon] in self.centroids.
-                point = Point(lat, lon)
+                # point = Point(lat, lon)
 
                 # Find the index of the sector containing this waypoint in the
                 # current sectorisation.
-                curr_idx = None
-                for i, polygon in enumerate(poly_list):
-                    if polygon.contains(point):
-                        curr_idx = i
-                        break
+                # curr_idx = None
+                # for i, polygon in enumerate(poly_list):
+                #     if polygon.contains(point):
+                #         curr_idx = i
+                #         break
 
-                if len(pre_poly_list) == len(poly_list):
-                    if curr_idx is not None:
+                # if len(pre_poly_list) == len(poly_list):
+                #     if curr_idx is not None:
                         # Waypoint changes sector if the same-indexed polygon in
                         # the previous sectorisation does NOT contain it.
-                        if not pre_poly_list[curr_idx].contains(point):
-                            flight_changed = True
-                            break  # one changed waypoint is enough
-                    else:
+                        # if not pre_poly_list[curr_idx].contains(point):
+                        #     flight_changed = True
+                            # break  # one changed waypoint is enough
+                    # else:
                         # Waypoint outside all current sectors — treat as changed
-                        flight_changed = True
-                        break
-                else:
+                #         flight_changed = True
+                #         break
+                # else:
                     # Sector count changed — treat as maximum dissimilarity
-                    flight_changed = True
-                    break
+        #             flight_changed = True
+        #             dissimilarity += 50
+        #             break
 
-            if has_waypoint_in_window:
-                total_flights += 1
-                if flight_changed:
-                    dissimilarity += 1
+        #     if has_waypoint_in_window:
+        #         total_flights += 1
+        #         if flight_changed:
+        #             dissimilarity += 1
 
-        if total_flights == 0:
-            return 0.0
+        # if total_flights == 0:
+        #     return 0.0
 
-        return dissimilarity / (total_flights * 100)
+        # return dissimilarity / total_flights
 
     def calc_conflict(self, poly_dict, conflict_data, num_step):
         """
@@ -567,12 +568,18 @@ class FooEnv(gym.Env):
         -------
         num_border_conflict : int
         """
-        start_time = 1673913600 + (num_step - 1) * 4 * 3600
+        start_time = 1700179200 + (num_step - 1) * 4 * 3600
         end_time = start_time + 4 * 3600
 
-        sector_borders = list(poly_dict.items())
-        threshold_distance = 5  # nautical miles (approximate, mapped to degrees)
+        sector_borders = []
+
+        for centroids, polygon in poly_dict.items():
+            sector_borders.append([centroids, polygon])
+
+        threshold_distance = 5
+
         obs_set = {(obs[0], obs[1]) for obs in self.obs}
+
         num_border_conflict = 0
 
         for conflict in conflict_data:
@@ -583,8 +590,8 @@ class FooEnv(gym.Env):
                         num_border_conflict += 1
                     elif distance == 0:
                         # Conflict is on the boundary — check vertical separation
-                        if (sector_centroid[0], sector_centroid[1]) in obs_set:
-                            for i in range(len(self.obs)):
+                        for i in range(len(self.obs)):
+                            if (sector_centroid[0], sector_centroid[1]) in obs_set:
                                 if 4 < self.obs[i][2] < 7:
                                     if abs(round(self.obs[i][2]) * 50 - conflict[1]) <= 10:
                                         num_border_conflict += 1
